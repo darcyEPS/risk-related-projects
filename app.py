@@ -1,17 +1,17 @@
-# app.py — Points (500 m snap-to-centroid) + Community (RD/LG/FN) + Legend toggles + Click halo + Readme
+# app.py — Points (500 m snap-to-centroid) + Community (RD/LG/FN) + Legend toggles + Information
 # - 500 m snap-to-centroid (deterministic; no jitter/offset UI)
 # - Halo highlight of clicked set (clears/replaced on next click)
 # - Legend: extent buckets with in-view counts + RD/LG/FN line toggles
 # - Data tab: All rows (no in-view option)
 # - No auto-fit on filter changes; initial re-zoom minimized
-# - Readme tab: deliverables summary + key terms + Sendai priorities + optional logos
+# - Information tab: loaded from information.md file + optional logos
 
 from shiny import App, ui, render, reactive
 from shinywidgets import output_widget, render_widget
 from ipyleaflet import Map, TileLayer, ScaleControl, GeoJSON, LayersControl, WidgetControl
 from ipywidgets import Layout, VBox, HBox, HTML, Checkbox
 from pathlib import Path
-import json, html, math, statistics, collections, base64, mimetypes
+import json, html, math, statistics, collections, base64, mimetypes, markdown
 
 
 # ---------- CONFIG ----------
@@ -85,9 +85,9 @@ def _candidates(name: str):
     base = Path(__file__).parent
     return [
         base / "data" / name,
-        base / "www" / "data" / name,
+        base / "graphics" / "data" / name,
         Path.cwd() / "data" / name,
-        Path.cwd() / "www" / "data" / name,
+        Path.cwd() / "graphics" / "data" / name,
     ]
 
 
@@ -122,7 +122,7 @@ def _finite_latlon(lat, lon):
 def _load_points_records():
     gj = _read_json_any(_candidates(POINTS_FILENAME))
     if gj is None:
-        raise FileNotFoundError(f"{POINTS_FILENAME} not found in ./data or ./www/data")
+        raise FileNotFoundError(f"{POINTS_FILENAME} not found in ./data or ./graphics/data")
     out, idx = [], 0
     for feat in gj.get("features", []):
         geom = feat.get("geometry") or {}
@@ -476,50 +476,26 @@ DEFAULT_SELECTED_FIELDS = [
 ]
 
 
-# ----- README helpers -----
-LOGO_DIR = Path(__file__).parent / "www" / "logos"
+# ----- INFORMATION helpers -----
+LOGO_DIR = Path(__file__).parent / "graphics" / "logos"
+INFORMATION_FILE = Path(__file__).parent / "information.md"
+LOGOS_URLS_FILE = Path(__file__).parent / "logos_urls.json"
 
 
-def deliverables_rows():
-    return [
-        {
-            "Deliverable": "1. Structured Excel database",
-            "Function": "Compiles and categorizes relevant projects in the region",
-            "Intended Purpose": "Can be used to easily update existing, or add new project information by a non-technical user.",
-            "Intended Users": "Non-technical practitioners",
-        },
-        {
-            "Deliverable": "2. Geospatial database",
-            "Function": "Links the information from the Excel database with GIS, enabling spatial visualization and querying",
-            "Intended Purpose": "Add geospatial components to updated or new projects added in the Excel database.",
-            "Intended Users": "Users with minimum GIS skills",
-        },
-        {
-            "Deliverable": "3. HTML dashboard",
-            "Function": "Can be deployed online for general use",
-            "Intended Purpose": "Can be used by anybody to search projects by keywords, or spatially.",
-            "Intended Users": "Non-technical practitioners including the public",
-        },
-    ]
-
-
-def html_table_from_rows(rows, columns):
-    """HTML table for Readme deliverables (fixed so all rows show)."""
-    thead = "".join(
-        f"<th style='text-align:left; padding:8px 10px; border-bottom:2px solid #ccc'>{html.escape(col)}</th>"
-        for col in columns
-    )
-    tb_rows = []
-    for r in rows:
-        tds = "".join(
-            f"<td style='padding:8px 10px; vertical-align:top'>{html.escape(str(r.get(col, '')))}</td>"
-            for col in columns
-        )
-        tb_rows.append(f"<tr>{tds}</tr>")
-    return (
-        "<table style='border-collapse:collapse; width:100%; font-size:14px; margin-top:10px'>"
-        f"<thead><tr>{thead}</tr></thead><tbody>{''.join(tb_rows)}</tbody></table>"
-    )
+def load_information_markdown():
+    """Load and convert information.md to HTML."""
+    if INFORMATION_FILE.exists():
+        try:
+            md_content = INFORMATION_FILE.read_text(encoding="utf-8")
+            html_content = markdown.markdown(
+                md_content,
+                extensions=['tables']
+            )
+            return html_content
+        except Exception:
+            return "<p style='color:#d32f2f'>Error loading information.md</p>"
+    else:
+        return "<p style='color:#d32f2f'>information.md not found</p>"
 
 
 def logo_files_to_data_uris():
@@ -551,6 +527,17 @@ def logo_files_to_data_uris():
             except Exception:
                 continue
     return items
+
+
+def load_logos_urls():
+    """Load logo URLs from logos_urls.json."""
+    urls = {}
+    if LOGOS_URLS_FILE.exists():
+        try:
+            urls = json.loads(LOGOS_URLS_FILE.read_text(encoding="utf-8"))
+        except Exception:
+            pass
+    return urls
 
 
 # ---------- UI ----------
@@ -595,7 +582,7 @@ app_ui = ui.page_sidebar(
     .leaflet-control .jupyter-widgets::-webkit-scrollbar,
     .leaflet-control .p-Widget::-webkit-scrollbar,
     .leaflet-control .lm-Widget::-webkit-scrollbar { display: none !important; }
-    .readme p { margin: 0 0 10px 0; }
+    .information p { margin: 0 0 10px 0; }
     .logo-cap { margin:6px 0 0 0; font-size:12px; opacity:.7 }
     .leaflet-control-layers { display: none !important; }
 
@@ -635,60 +622,10 @@ app_ui = ui.page_sidebar(
             ui.output_ui("table_data"),
         ),
         ui.nav_panel(
-            "Readme",
+            "Information",
             ui.div(
-                {"class":"readme","style":"padding:16px; line-height:1.55; max-width:980px"},
-                ui.h3("About the Database and Tools"),
-                ui.p(
-                    "This dashboard is part of a three-deliverable toolset developed to support "
-                    "risk-related project compilation, spatial visualization, and online dissemination "
-                    "for the Mainland Coast Salish Area."
-                ),
-                ui.p(
-                    "Use the Map tab to explore locations, and the Data tab to search/filter the database. "
-                    "The summary below outlines the three deliverables, including function, purpose, and audience."
-                ),
-                ui.output_ui("readme_table"),
-
-                ui.tags.hr(style="margin:20px 0; border-top:2px solid #ddd"),
-
-                ui.h3("Key Terms"),
-                ui.p(
-                    ui.HTML(
-                        "<b>Risk</b> is the potential loss of life, injury, or damage that could occur to a community or system. "
-                        "<b>Risk</b> depends on three factors: "
-                        "<b>hazard</b> (a natural event or process that can cause harm), "
-                        "<b>exposure</b> (people, assets, or ecosystems that could be affected), and "
-                        "<b>vulnerability</b> (how easily those exposed elements can be harmed)."
-                    )
-                ),
-                ui.p(
-                    ui.HTML(
-                        "<b>Resilience</b> is the ability of a community or system to resist, absorb, adapt to, "
-                        "and recover from hazards efficiently, while maintaining essential functions."
-                    )
-                ),
-                ui.p(
-                    ui.HTML(
-                        "<b>Ecosystem services</b> are the benefits that healthy ecosystems provide to people—such as clean water, "
-                        "flood regulation, and cultural value. These principles are reflected in <i>Hílekw Sq’eq’ó</i> and "
-                        "Ducks Unlimited’s <i>International Science Report 2025</i>, which emphasize conserving and strengthening "
-                        "natural systems for long-term resilience."
-                    )
-                ),
-
-                ui.h3("The Sendai Priorities"),
-                ui.p("According to the Sendai Framework for Disaster Risk Reduction (2015–2030):"),
-                ui.tags.ul(
-                    ui.tags.li(ui.HTML("<b>Priority 1:</b> Understanding disaster risk.")),
-                    ui.tags.li(ui.HTML("<b>Priority 2:</b> Strengthening disaster risk governance to manage disaster risk.")),
-                    ui.tags.li(ui.HTML("<b>Priority 3:</b> Investing in disaster reduction for resilience.")),
-                    ui.tags.li(ui.HTML(
-                        "<b>Priority 4:</b> Enhancing disaster preparedness for effective response, and to "
-                        "<i>Build Back Better</i> in recovery, rehabilitation, and reconstruction."
-                    )),
-                ),
-
+                {"class":"information","style":"padding:16px; line-height:1.55; max-width:980px"},
+                ui.output_ui("information_content"),
                 ui.tags.hr(style="margin:20px 0; border-top:2px solid #ddd"),
                 ui.output_ui("logos"),
             ),
@@ -1305,24 +1242,43 @@ def server(input, output, session):
         logos_data = logo_files_to_data_uris()
         if not logos_data:
             return ui.HTML(
-                "<div style='opacity:.7'>No logos found. Put images in <code>./www/logos/</code> "
-                "(png/jpg/jpeg/svg/webp). Example: <code>www/logos/logo1.png</code></div>"
+                "<div style='opacity:.7'>No logos found. Put images in <code>./graphics/logos/</code> "
+                "(png/jpg/jpeg/svg/webp). Example: <code>graphics/logos/logo1.png</code></div>"
             )
+        logos_urls = load_logos_urls()
         blocks = []
         for item in logos_data:
-            blocks.append(
-                ui.div(
-                    {"style":"display:flex; flex-direction:column; align-items:center; width:200px"},
-                    ui.tags.img(
-                        src=item["data_uri"],
-                        alt=item["name"],
-                        style=(
-                            "height:60px; max-width:180px; object-fit:contain; background:#fff; "
-                            "padding:4px; border-radius:6px; box-shadow:0 0 0 1px rgba(0,0,0,0.05)"
-                        ),
-                    ),
-                )
+            url = logos_urls.get(item["name"])
+            img_elem = ui.tags.img(
+                src=item["data_uri"],
+                alt=item["name"],
+                style=(
+                    "height:85px; max-width:160px; object-fit:contain; background:#fff; "
+                    "padding:4px; border-radius:6px; box-shadow:0 0 0 1px rgba(0,0,0,0.05); cursor:pointer; "
+                    "transition:transform 0.2s, box-shadow 0.2s;"
+                ),
             )
-        return ui.div({"style":"display:flex; gap:24px; align-items:flex-start; flex-wrap:wrap;"}, *blocks)
+            
+            if url and url.startswith("http"):
+                elem = ui.tags.a(
+                    img_elem,
+                    href=url,
+                    target="_blank",
+                    rel="noopener noreferrer",
+                    style="text-decoration:none; display:flex; flex-direction:column; align-items:center; justify-content:center;",
+                )
+            else:
+                elem = ui.div(
+                    {"style":"display:flex; flex-direction:column; align-items:center; justify-content:center;"},
+                    img_elem,
+                )
+            
+            blocks.append(elem)
+        return ui.div({"style":"display:flex; gap:24px; align-items:flex-start;"}, *blocks)
+
+    @render.ui
+    def information_content():
+        html_content = load_information_markdown()
+        return ui.HTML(html_content)
 
 app = App(app_ui, server)
