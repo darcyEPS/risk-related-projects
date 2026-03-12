@@ -18,3 +18,4 @@ Thumbs.db
 # GIS/Data artifacts
 *.log
 *.tmp
+risk_project_dashboard.code-workspace
