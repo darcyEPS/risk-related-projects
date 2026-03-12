@@ -31,7 +31,7 @@ According to the Sendai Framework for Disaster Risk Reduction (2015–2030):
 - **Priority 1:** Understanding disaster risk.
 - **Priority 2:** Strengthening disaster risk governance to manage disaster risk.
 - **Priority 3:** Investing in disaster reduction for resilience.
-- **Priority 4:** Enhancing disaster preparedness for effective response, and to *Build Back Better* in recovery, rehabilitation, and reconstruction.
+- **Priority 4:** Enhancing disaster preparedness for effective response, and to "Build Back Better" in recovery, rehabilitation, and reconstruction.
 
 ---
 ## Project Partners

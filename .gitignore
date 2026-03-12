@@ -19,3 +19,4 @@ Thumbs.db
 *.log
 *.tmp
 risk_project_dashboard.code-workspace
+__pycache__

@@ -545,12 +545,11 @@ app_ui = ui.page_sidebar(
     # Sidebar
     ui.sidebar(
         ui.h5("Filters"),
-        ui.input_selectize(
+        ui.input_checkbox_group(
             "f_aims",
             "Study Outcome Aims",
             choices=AIM_FILTER_CHOICES,
             selected=[],
-            multiple=True,
         ),
         ui.output_ui("ecos_how_filter"),
         ui.tags.hr(style="border:0;border-top:2px solid #8a93a1;margin:12px 0 10px 0"),

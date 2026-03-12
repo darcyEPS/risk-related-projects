@@ -19,11 +19,13 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Install Shinylive
-        run: pip install shinylive shiny
+      - name: Install Dependencies
+        run: |
+          pip install shinylive shiny
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
       - name: Build Site
-        # This replaces your manual .ps1 script
+        # Ensure requirements.txt is in the root so shinylive can see it
         run: shinylive export . site
 
       - name: Deploy to GitHub Pages
