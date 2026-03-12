@@ -646,8 +646,21 @@ app_ui = ui.page_sidebar(
         ),
     ),
 
+    ui.tags.script(
+        """
+        var checkTitle = setInterval(function() {
+            if (document.title !== "Risk-Related Projects") {
+                document.title = "Risk-Related Projects";
+            } else {
+                clearInterval(checkTitle);
+            }
+        }, 100);
+        """
+    ),
+
+    # Visibility and Metadata
     title="Mainland Coast Salish Area Risk-Related Projects Database",
-    window_title="Risk-Related Projects"
+    window_title="Risk-Related Projects",
 )
 
 
