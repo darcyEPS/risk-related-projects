@@ -646,8 +646,8 @@ app_ui = ui.page_sidebar(
         ),
     ),
 
-    ui.tags.script("document.title = 'Risk-Related Projects';"),
     title="Mainland Coast Salish Area Risk-Related Projects Database",
+    window_title="Risk-Related Projects"
 )
 
 
