@@ -5,7 +5,7 @@
 # - ./data
 
 # --- config: your Anaconda Python ---
-$py = 'C:\ProgramData\anaconda3\python.exe'
+$py = 'python'
 
 Write-Host "Using Python:" $py -ForegroundColor Cyan
 

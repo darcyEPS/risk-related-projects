@@ -453,8 +453,27 @@ EXTENT_FIELD   = _find_field("Project extent")
 ECO_YN_FIELD   = _find_field("Does the Study Outcome Aim to Provide Ecosystem Services? (Y/N)")
 ECO_HOW_FIELD  = _find_field("How Does the Project Outcome Aim to Provide Ecosystem Services?")
 
-# Fields that should NOT show in column picker or tables (e.g., fid)
-HIDDEN_FIELDS = {k for k in KEY_ORDER if k.strip().lower() == "fid"}
+# Fields that should NOT show in column picker or tables.
+ALWAYS_HIDDEN_FIELD_NAMES = {
+    "fid",
+    "project id",
+    "year of commencement",
+    "created by",
+    "date created",
+    "modified by",
+    "date modified",
+}
+HIDDEN_FIELDS = {k for k in KEY_ORDER if k.strip().lower() in ALWAYS_HIDDEN_FIELD_NAMES}
+
+# Default checked fields in the "Fields to show" selector.
+DEFAULT_SELECTED_FIELDS = [
+    "Project Name",
+    "Project Proponent/Owner",
+    "Year of Completion",
+    "Project Goals",
+    "Most Prominent Hazards",
+    "Sendai Priority",
+]
 
 
 # ----- README helpers -----
@@ -764,7 +783,9 @@ def server(input, output, session):
         if ECO_HOW_FIELD: excluded.add(ECO_HOW_FIELD)
         if ECO_YN_FIELD:  excluded.add(ECO_YN_FIELD)
         order2 = [k for k in KEY_ORDER if k not in excluded]
-        default = order2[:8] if order2 else []
+        default = [k for k in DEFAULT_SELECTED_FIELDS if k in order2]
+        if not default:
+            default = order2[:8] if order2 else []
         return ui.input_checkbox_group("cols", label="", choices=order2, selected=default, inline=False)
 
     # ---------- filtering ----------

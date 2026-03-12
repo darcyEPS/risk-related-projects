@@ -4,10 +4,17 @@
 # python environment
 shinyenv/
 __pycache__/
+*.pyc
 .ipynb_checkpoints/
 
 # shinylive temp files
+site/
 _shinylive_build/
 
 # OS files
 .DS_Store
+Thumbs.db
+
+# GIS/Data artifacts
+*.log
+*.tmp

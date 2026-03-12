@@ -1,0 +1,33 @@
+name: Build and Deploy Shinylive
+
+on:
+  push:
+    branches:
+      - main  # Only runs when code hits the main branch
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Shinylive
+        run: pip install shinylive shiny
+
+      - name: Build Site
+        # This replaces your manual .ps1 script
+        run: shinylive export . site
+
+      - name: Deploy to GitHub Pages
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: site # The folder the action should deploy
+          branch: gh-pages # This will create a NEW branch just for the website
