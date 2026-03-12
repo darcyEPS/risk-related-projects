@@ -1,0 +1,13 @@
+# settings
+.vscode
+
+# python environment
+shinyenv/
+__pycache__/
+.ipynb_checkpoints/
+
+# shinylive temp files
+_shinylive_build/
+
+# OS files
+.DS_Store
