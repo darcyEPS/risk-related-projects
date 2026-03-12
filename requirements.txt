@@ -1,1 +1,5 @@
+# The application uses markdown conversion.  ``markdown-it-py`` is
+# shipped to the browser by Shinylive; the traditional ``markdown``
+# package is kept in case the developer runs the app locally.
+markdown-it-py
 markdown

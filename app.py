@@ -11,7 +11,25 @@ from shinywidgets import output_widget, render_widget
 from ipyleaflet import Map, TileLayer, ScaleControl, GeoJSON, LayersControl, WidgetControl
 from ipywidgets import Layout, VBox, HBox, HTML, Checkbox
 from pathlib import Path
-import json, html, math, statistics, collections, base64, mimetypes, markdown
+import json, html, math, statistics, collections, base64, mimetypes
+
+# Markdown conversion: prefer the standard ``markdown`` library when
+# available (used by the development environment); fall back to
+# ``markdown-it-py`` which *is* bundled in the Pyodide build that
+# Shinylive exports.  The dependency list is kept minimal so the
+# client build doesn't try to pull in packages Pyodide can't provide.
+try:
+    import markdown
+
+    def render_markdown(text: str) -> str:
+        return markdown.markdown(text, extensions=["tables"])
+except ImportError:  # most likely the Pyodide runtime
+    from markdown_it import MarkdownIt
+
+    _md_parser = MarkdownIt("commonmark")
+
+    def render_markdown(text: str) -> str:
+        return _md_parser.render(text)
 
 
 # ---------- CONFIG ----------
@@ -487,10 +505,7 @@ def load_information_markdown():
     if INFORMATION_FILE.exists():
         try:
             md_content = INFORMATION_FILE.read_text(encoding="utf-8")
-            html_content = markdown.markdown(
-                md_content,
-                extensions=['tables']
-            )
+            html_content = render_markdown(md_content)
             return html_content
         except Exception:
             return "<p style='color:#d32f2f'>Error loading information.md</p>"
