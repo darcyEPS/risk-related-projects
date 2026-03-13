@@ -1,6 +1,6 @@
 <!-- # About the Database -->
 
-This dashboard is part of a toolset developed to support risk-related project compilation, spatial visualization, and online dissemination for the Mainland Coast Salish Area. For more details on the complete database and geospatial information, please contact ________.
+This dashboard is part of a toolset developed to support risk-related project compilation, spatial visualization, and online dissemination for the Mainland Coast Salish Area. For more details on the complete database and geospatial information, please contact darcy.turin@emplans.ca
 
 Use the Map tab to explore locations, and the Data tab to search/filter the database. The summary below outlines the three deliverables, including function, purpose, and audience.
 
