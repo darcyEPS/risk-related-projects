@@ -306,6 +306,25 @@ app_ui = ui.page_sidebar(
         scrollbar-color: #cbd5e1 transparent;
         scrollbar-width: thin;
     }
+
+    /* Tab-specific overflow settings */
+    .tab-content { overflow: visible; height: auto; }
+    .tab-pane { overflow: visible; height: auto; }
+    
+    /* Data and Information tabs should scroll */
+    .tab-pane[data-value="Data"],
+    .tab-pane[data-value="Information"] {
+        overflow-y: auto;
+        max-height: calc(100vh - 128px);
+        padding: 16px;
+    }
+    
+    /* Map tab keeps fixed layout without scrolling */
+    .tab-pane[data-value="Map"] {
+        overflow: hidden;
+        height: 100%;
+        padding: 0;
+    }
     """
     ),
     # Main content
