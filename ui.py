@@ -106,7 +106,7 @@ app_ui = ui.page_sidebar(
     .leaflet-control-layers { display: none !important; }
 
     /* Sticky header + pinned first column for data tables */
-    .sticky-wrap { overflow: visible; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    .sticky-wrap { overflow: auto; max-width: 100%; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
     table.sticky { border-collapse: separate; border-spacing: 0; border-radius: 8px; overflow: hidden; }
     table.sticky thead th {
       position: sticky; top: 0; background: #f1f5f9;
@@ -325,6 +325,28 @@ app_ui = ui.page_sidebar(
         height: 100%;
         padding: 0;
     }
+
+    /* Keep the split handle usable even when table content is long */
+    #map-split-container { position: relative; }
+    #map-pane { min-height: 220px; }
+    #map-resizer {
+        position: relative;
+        z-index: 50;
+        height: 12px;
+        flex: 0 0 12px;
+        cursor: row-resize;
+        background: linear-gradient(to bottom, rgba(100,116,139,0.16), rgba(100,116,139,0.08));
+        border-top: 1px solid rgba(148,163,184,0.35);
+        border-bottom: 1px solid rgba(148,163,184,0.35);
+        user-select: none;
+        touch-action: none;
+    }
+    #bottom-pane {
+        position: relative;
+        z-index: 1;
+        overflow: auto;
+        min-height: 150px;
+    }
     """
     ),
     # Main content
@@ -338,10 +360,10 @@ app_ui = ui.page_sidebar(
                     output_widget("m", height="100%"),
                 ),
                 ui.tags.div(
-                    {"id": "map-resizer", "style": "height:8px;cursor:row-resize;background:rgba(0,0,0,0.08);"},
+                    {"id": "map-resizer"},
                 ),
                 ui.tags.div(
-                    {"id": "bottom-pane", "style": "flex:1 1 auto;overflow:auto;min-height:150px;padding:16px;background-color:#ffffff;border-radius:0 0 8px 8px;box-shadow:0 1px 3px rgba(0,0,0,0.1);"},
+                    {"id": "bottom-pane", "style": "flex:1 1 auto;padding:16px;background-color:#ffffff;border-radius:0 0 8px 8px;box-shadow:0 1px 3px rgba(0,0,0,0.1);"},
                     ui.HTML("<div style='font-weight:600;margin:0 0 8px 0;font-size:16px;color:#1e293b'>Selected projects</div>"),
                     ui.output_ui("clicked_table"),
                 ),
@@ -383,41 +405,57 @@ app_ui = ui.page_sidebar(
     ui.tags.script(
         """
         (function() {
-            var resizer = document.getElementById('map-resizer');
-            var container = document.getElementById('map-split-container');
-            var top = document.getElementById('map-pane');
-            if (!resizer || !container || !top) return;
+            function initMapSplitter() {
+                var resizer = document.getElementById('map-resizer');
+                var container = document.getElementById('map-split-container');
+                var top = document.getElementById('map-pane');
+                if (!resizer || !container || !top || resizer.dataset.bound === '1') return;
 
-            var startY = 0;
-            var startTopHeight = 0;
-            var minTop = 120;
-            var minBottom = 120;
+                var startY = 0;
+                var startTopHeight = 0;
+                var minTop = 140;
+                var minBottom = 140;
 
-            function onMouseMove(e) {
-                var dy = e.clientY - startY;
-                var containerRect = container.getBoundingClientRect();
-                var maxTop = containerRect.height - minBottom - resizer.offsetHeight;
-                var newTopHeight = Math.min(Math.max(startTopHeight + dy, minTop), maxTop);
-                top.style.flex = '0 0 ' + newTopHeight + 'px';
-                var bottom = document.getElementById('bottom-pane');
-                if (bottom) {
-                    bottom.style.flex = '1 1 auto';
+                function applyDrag(clientY) {
+                    var dy = clientY - startY;
+                    var containerRect = container.getBoundingClientRect();
+                    var maxTop = containerRect.height - minBottom - resizer.offsetHeight;
+                    var newTopHeight = Math.min(Math.max(startTopHeight + dy, minTop), maxTop);
+                    top.style.flex = '0 0 ' + newTopHeight + 'px';
                 }
+
+                function onPointerMove(e) {
+                    applyDrag(e.clientY);
+                }
+
+                function stopDrag() {
+                    document.removeEventListener('pointermove', onPointerMove);
+                    document.removeEventListener('pointerup', stopDrag);
+                    document.body.style.cursor = '';
+                    document.body.style.userSelect = '';
+                    window.dispatchEvent(new Event('resize'));
+                }
+
+                resizer.addEventListener('pointerdown', function(e) {
+                    e.preventDefault();
+                    startY = e.clientY;
+                    startTopHeight = top.getBoundingClientRect().height;
+                    document.body.style.cursor = 'row-resize';
+                    document.body.style.userSelect = 'none';
+                    document.addEventListener('pointermove', onPointerMove);
+                    document.addEventListener('pointerup', stopDrag);
+                });
+
+                resizer.dataset.bound = '1';
             }
 
-            function onMouseUp() {
-                document.removeEventListener('mousemove', onMouseMove);
-                document.removeEventListener('mouseup', onMouseUp);
-                window.dispatchEvent(new Event('resize'));
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', initMapSplitter);
+            } else {
+                initMapSplitter();
             }
 
-            resizer.addEventListener('mousedown', function(e) {
-                e.preventDefault();
-                startY = e.clientY;
-                startTopHeight = top.getBoundingClientRect().height;
-                document.addEventListener('mousemove', onMouseMove);
-                document.addEventListener('mouseup', onMouseUp);
-            });
+            document.addEventListener('shown.bs.tab', initMapSplitter);
         })();
         """
     ),

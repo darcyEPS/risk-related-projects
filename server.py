@@ -727,9 +727,9 @@ def server(input, output, session):
             "<table class='sticky' style='font-size:14px;width:100%'>"
             f"<thead><tr>{thead}</tr></thead><tbody>{''.join(body)}</tbody></table>"
         )
-        style = "height:100%;"
+        style = "width:100%;"
         if max_vh:
-            style += f" max-height:{max_vh};"
+            style += f" max-height:{max_vh}; overflow:auto;"
         return f"<div class='sticky-wrap' style='{style}'>{table}</div>"
 
     @render.ui
@@ -770,7 +770,7 @@ def server(input, output, session):
         if not cols:
             return ui.HTML("<div style='opacity:.6'>Choose columns in the sidebar to show fields here.</div>")
         slim = [{"props": {k: (it.get("props") or {}).get(k, "") for k in cols}} for it in rows[:400]]
-        return ui.HTML(_html_table(slim, cols, max_vh="100%"))
+        return ui.HTML(_html_table(slim, cols))
 
     @render.ui
     def logos():
