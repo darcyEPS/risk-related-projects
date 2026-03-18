@@ -9,8 +9,10 @@ Points (500 m snap-to-centroid) + Community (RD/LG/FN) + Legend toggles + Inform
 - Information tab: loaded from information.md file + optional logos
 """
 
+from pathlib import Path
 from shiny import App
 from ui import app_ui
 from server import server
 
-app = App(app_ui, server)
+www_dir = Path(__file__).parent / "www"
+app = App(app_ui, server, static_assets=www_dir)
