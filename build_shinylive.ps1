@@ -116,12 +116,22 @@ if (Test-Path $indexPath) {
 
     # Replace whatever <title>...</title> is there with our custom title
     $html = $html -replace '<title>.*?</title>', "<title>$customTitle</title>"
+    
+    # Inject the favicon before </head>
+    $html = $html -replace '</head>', '<link rel="icon" type="image/svg+xml" href="favicon.svg"></head>'
 
     Set-Content -Path $indexPath -Value $html -Encoding UTF8
 
     Write-Host "Updated <title> in site\index.html to '$customTitle'." -ForegroundColor Green
 } else {
     Write-Host "Warning: site\index.html not found; could not update title." -ForegroundColor Yellow
+}
+
+$faviconSrc = Join-Path $root 'graphics\favicon.svg'
+$faviconDest = Join-Path $siteDir 'favicon.svg'
+if (Test-Path $faviconSrc) {
+    Write-Host "Copying favicon to site directory..." -ForegroundColor Cyan
+    Copy-Item -Path $faviconSrc -Destination $faviconDest -Force
 }
 
 Write-Host "Shinylive packaging complete. Output: $siteDir" -ForegroundColor Green

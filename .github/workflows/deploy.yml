@@ -27,8 +27,12 @@ jobs:
       - name: Build Site
         run: |
           shinylive export . site
+          # Force the original static favicon into the root of the site so the browser can see it
+          cp graphics/favicon.svg site/favicon.svg
           # This forces the HTML title to be correct at the source
           sed -i 's/<title>Shiny App<\/title>/<title>Risk-Related Projects<\/title>/g' site/index.html
+          # Native browser favicon injection
+          sed -i 's/<\/head>/<link rel="icon" type="image\/svg+xml" href="favicon.svg"><\/head>/' site/index.html
 
       - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4
