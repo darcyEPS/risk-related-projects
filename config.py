@@ -78,7 +78,6 @@ FILTER_FIELDS = [
 ]
 
 AIM_FILTER_CHOICES = {
-    "reduce_risk": "Reduce Risk",
     "reduce_hazard": "Reduce Hazard",
     "reduce_exposure": "Reduce Exposure",
     "reduce_vulnerability": "Reduce Vulnerability",
@@ -87,7 +86,6 @@ AIM_FILTER_CHOICES = {
 }
 
 AIM_FILTER_FIELDS = {
-    "reduce_risk": "Does the Study Outcome Aim to Reduce Risk? (Y/N)",
     "reduce_hazard": "Reduce Hazard (Y/N)",
     "reduce_exposure": "Reduce Exposure (Y/N)",
     "reduce_vulnerability": "Reduce Vulnerability (Y/N)",
